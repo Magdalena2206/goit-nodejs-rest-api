@@ -40,7 +40,7 @@ router.post('/', validateContact, async (req, res, next) => {
     res.status(201).json({status: 'success', code: 201, data: {contact}});
 } catch (error) {
     next(error);
-}
+  }
 })
 
 router.delete('/:contactId', async (req, res, next) => {
@@ -49,7 +49,7 @@ router.delete('/:contactId', async (req, res, next) => {
     if (contact) {
         return res
             .status(200)
-            .json({status: 'success', code: 200, data: {contact}});
+            .json({status: 'success', code: 200, message: 'contact deleted', data: {contact}});
     }
     return res
         .status(404)
