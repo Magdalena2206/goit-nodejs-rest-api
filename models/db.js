@@ -1,6 +1,5 @@
-const fs = require('fs/promises');
+const fs = require('fs/promises')
 const path = require('path')
-
 
 class FileAdapter {
     constructor(file) {
@@ -16,6 +15,6 @@ class FileAdapter {
     async write(data) {
         await fs.writeFile(this.store, JSON.stringify(data))
     }
-
 }
+
 module.exports = FileAdapter

@@ -1,10 +1,10 @@
 const DB = require('./db');
 const db = new DB('contacts.json');
-const crypto = require('crypto')
+const crypto = require('crypto');
 
 const listContacts = async () => {
   return await db.read();
-}
+};
 
 const getContactById = async contactId => {
   const contacts = await db.read();
@@ -21,7 +21,7 @@ const removeContact = async contactId => {
     return result;
   }
   return null;
-}
+};
 
 const addContact = async body => {
   const contacts = await db.read();
