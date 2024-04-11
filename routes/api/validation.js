@@ -16,6 +16,10 @@ const schemaId = Joi.object({
     id: Joi.string().pattern(new RegExp(pattern)).required(),
 });
 
+const schemaStatusContact = Joi.object({
+    favorite: Joi.boolean().required(),
+});
+  
 const validate = async (schema, obj, res, next) => {
     try {
         await schema.validateAsync(obj);
@@ -33,8 +37,9 @@ module.exports.validateContact = async (req, res, next) => {
     return await validate(schemaContact, req.body, res, next);
 };
 
-
-
 module.exports.validateId = async (req, res, next) => {
     return await validate(schemaId, req.params, res, next);
 };
+module.exports.validateStatusContact = async (req, res, next) => {
+    return await validate(schemaStatusContact, req.body, res, next);
+  };
