@@ -9,14 +9,16 @@ const db = mongoose.connect(uri, {
     useUnifiedTopology: true,
 });
 
+mongoose.set('strictQuery', true);
+
 mongoose.connection.on('connected', () => {
-    console.log('Database connection successful');
+    console.log('Database connection to DB');
 });
 
 mongoose.connection.on('error', err => {
     console.log(`Mongoose connection error: ${err.message}`);
-    process.exit(1);
 });
+
 process.on('SIGINT', async () => {
     await mongoose.connection.close();
     console.log('Connection to DB closed');
