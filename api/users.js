@@ -4,7 +4,7 @@ const userController = require('../controllers/users');
 const { authorizeUser } = require('../middlewares/auth');
 const { uploadMiddleware } = require('../middleware/upload');
 
-router.post('/signup', userController.register)
+router.post('/signup', userController.signup)
 router.post('/login', userController.login)
 router.get('/logout', authorizeUser, userController.logout)
 router.get('/current', authorizeUser, userController.current)

@@ -21,6 +21,9 @@ const userSchema = new Schema(
 		token: {
 			type: String,
 			default: null,
+        },
+        avatarURL: {
+			type: String,
 		},
 		owner: {
 			type: Schema.Types.ObjectId,
