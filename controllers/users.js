@@ -1,82 +1,123 @@
-const jwt = require('jsonwebtoken');
-const Users = require('../dbMethods/users');
-const { HttpCode } = require('../configuration/const');
-require('dotenv').config();
-const SECRET_KEY = process.env.JWT_SECRET_KEY;
+const { userValidator } = require('./../routes/validator')
+const service = require('../models/users')
+const jwt = require('jsonwebtoken')
+const User = require('../models/schemas/user')
+require('dotenv').config()
+
+const SECRET_KEY = process.env.SECRET_KEY
 
 const signup = async (req, res, next) => {
-    const { name, email, password, subscription, gender } = req.body;
-    const user = await Users.findByEmail(email);
-    if (user) {
-        return res.status(HttpCode.CONFLICT).json({
-            status: 'error',
-            code: HttpCode.CONFLICT,
-            message: 'Email is already exists',
-        });
-    }
+	const { error } = userValidator(req.body)
+	if (error) return res.status(400).json({ message: error.details[0].message })
 
-    try {
-        const newUser = await Users.create({
-            name,
-            email,
-            password,
-            subscription,
-            gender,
-        });
-        return res.status(HttpCode.CREATED).json({
-            status: 'success',
-            code: HttpCode.CREATED,
-            data: {
-                id: newUser.id,
-                name: newUser.name,
-                email: newUser.email,
-                subscription: newUser.subscription,
-                gender: newUser.gender,
-            },
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
+	const { email, password, subscription } = req.body
+	const user = await service.getUser({ email })
+	if (user) {
+		return res.status(409).json({
+			status: 'error',
+			code: 409,
+			message: 'Email is already exist',
+			data: 'Conflict',
+		})
+	}
+	try {
+		const newUser = new User({ email, password, subscription })
+		newUser.setPassword(password)
+		await newUser.save()
+		res.status(201).json({
+			status: 'success',
+			code: 201,
+			data: {
+				message: 'Registration successful',
+			},
+		})
+	} catch (error) {
+		next(error)
+	}
+}
 
 
 const logout = async (req, res, next) => {
-    const id = req.user._id;
-    await Users.updateToken(id, null);
-    return res.status(HttpCode.NO_CONTENT).json({ test: 'test' });
-};
+	try {
+		const user = await service.getUser({ _id: req.user._id })
+		if (!user) {
+			return res.status(401).json({ message: 'Not authorized' })
+		} else {
+			user.setToken(null)
+			await user.save()
+			res.json({
+				status: 'success',
+				code: 204,
+				data: {
+					message: 'No content',
+				},
+			})
+		}
+	} catch (error) {
+		next(error)
+	}
+}
 const login = async (req, res, next) => {
-    const { email, password } = req.body;
-    const user = await Users.findByEmail(email);
-    const isValidPassword = await user.isValidPassword(password);
-    if (!user || !isValidPassword) {
-        return res.status(HttpCode.UNAUTHORIZED).json({
-            status: 'error',
-            code: HttpCode.UNAUTHORIZED,
-            message: 'Invalid credentials',
-        });
-    }
-    const id = user._id;
-    const payload = { id };
-    const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '1h' });
-    await Users.updateToken(id, token);
-    return res.status(HttpCode.OK).json({
-        status: 'success',
-        code: HttpCode.OK,
-        date: {
-            token,
-        },
-    });
-};
+	const { error } = userValidator(req.body)
+	if (error) return res.status(400).json({ message: error.details[0].message })
+
+	const { email, password } = req.body
+	const user = await service.getUser({ email })
+
+	if (!user || !user.validPassword(password)) {
+		return res.status(401).json({
+			status: 'error',
+			code: 401,
+			message: 'Email or password is wrong',
+			data: 'Unauthorized',
+		})
+	}
+
+	const payload = {
+		id: user.id,
+		email: user.email,
+	}
+
+	const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '1h' })
+	user.setToken(token)
+	await user.save()
+	res.json({
+		status: 'success',
+		code: 200,
+		data: {
+			token
+		},
+	})
+}
 const current = async (req, res, next) => {
-    const id = req.user._id;
-    await Users.updateToken(id, null);
-    return res.status(HttpCode.NO_CONTENT).json({ test: 'test' });
-    
-};
+	try {
+		const user = await service.getUser({ _id: req.user._id })
+		if (!user) {
+			return res.status(401).json({ message: 'Not authorized' })
+		} else {
+			res.json({
+				status: 'success',
+				code: 200,
+				data: {
+					user
+				},
+			})
+		}
+	} catch (error) {
+		next(error)
+	}
+}
 
-
+const getUsers = async (req, res, next) => {
+	const { email } = req.user
+	res.json({
+		status: 'success',
+		code: 200,
+		data: {
+			message: `Authorization was successful: ${email}`,
+		},
+	})
+}
 
 
 module.exports = {
@@ -84,4 +125,5 @@ module.exports = {
     login,
     logout,
     current,
+    getUsers
 };

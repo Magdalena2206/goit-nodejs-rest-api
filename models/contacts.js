@@ -1,60 +1,21 @@
-const {Schema, model, SchemaTypes} = require('mongoose');
-const {ValidInfoContact} = require('../configuration/const');
-const mongoosePaginate = require('mongoose-paginate-v2');
+const Contact = require('./schemas/contacts')
 
-const contactSchema = new Schema(
-    {
-        name: {
-            type: String,
-            required: [true, 'Name is required'],
-        },
-        age: {
-            type: Number,
-            min: ValidInfoContact.MIN_AGE,
-            max: ValidInfoContact.MAX_AGE,
-        },
-        email: {
-            type: String,
-            required: [true, 'Email for contact is required'],
-        },
-        favorite: {
-            type: Boolean,
-            default: false,
-            required: true,
-        },
-        owner: {
-            type: SchemaTypes.ObjectId,
-            ref: 'user',
-        },
-    },
-    {
-        versionKey: false,
-        timestamps: true,
-        toJSON: {
-            virtuals: true,
-            transform: function (doc, ret) {
-                delete ret._id;
-                return ret;
-            },
-        },
-        toObject: { virtuals: true },
-    },
-);
+const getAllContacts = async () => Contact.find()
 
-contactSchema.path('name').validate(function (value) {
-    const re = /[A-Z]\w+/;
-    return re.test(String(value));
-});
+const getContactById = async contactId => Contact.findById(contactId)
 
-contactSchema.virtual('status').get(function () {
-    if (this.age >= 60) {
-        return 'old';
-    }
-    return 'young';
-});
+const createContact = async ({ name, email, phone, favorite }) => {
+	return Contact.create({ name, email, phone, favorite })
+}
 
-contactSchema.plugin(mongoosePaginate);
+const updateContact = async (contactId, fields) => {
+	return Contact.findByIdAndUpdate(contactId, fields, { new: true, strict: 'throw', runValidators: true })
+}
 
-const contact = model('contact', contactSchema);
+const updateStatusContact = async (contactId, favorite) => {
+	return Contact.findByIdAndUpdate(contactId, { favorite })
+}
 
-module.exports = contact;
+const deleteContact = async contactId => Contact.findByIdAndRemove(contactId)
+
+module.exports = { getAllContacts, getContactById, createContact, updateContact, updateStatusContact, deleteContact }
