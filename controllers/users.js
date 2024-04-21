@@ -9,7 +9,7 @@ const path = require('path');
 const Jimp = require('jimp');
 const { imageStore } = require('../middlewares/upload');
 
-const SECRET_KEY = process.env.SECRET_KEY
+const secret = process.env.SECRET;
 
 const signup = async (req, res, next) => {
 	const { error } = userValidator(req.body)
@@ -88,7 +88,7 @@ const login = async (req, res, next) => {
         email: user.email,
     }
 
-    const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '1h' })
+    const token = jwt.sign(payload, secret, { expiresIn: '1h' })
     user.setToken(token)
     await user.save()
     res.json({

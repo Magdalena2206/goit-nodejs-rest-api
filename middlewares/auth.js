@@ -1,34 +1,39 @@
+// const jwt = require('jsonwebtoken');
 const passport = require('passport')
-const passportJWT = require('passport-jwt')
+const {Strategy, ExtractJwt} = require('passport-jwt')
 const User = require('../models/schemas/user')
 require('dotenv').config()
-const { SECRET_KEY } = process.env
+const secret = process.env.SECRET;
 
-const ExtractJwt = passportJWT.ExtractJwt
-const Strategy = passportJWT.Strategy
+
 const params = {
-	secretOrKey: SECRET_KEY,
+	secretOrKey: secret,
 	jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
 }
 
 
+
 passport.use(
-	new Strategy(params, function (payload, done) {
+    new Strategy(params, function (payload, done) {
 		User.find({ _id: payload.id })
 			.then(([user]) => {
 				if (!user) {
-					return done(new Error('User not found'))
+					return done(new Error('User not found'));
 				}
-				return done(null, user)
+				return done(null, user);
 			})
-			.catch(err => done(err))
+			.catch(error => done(error));
 	})
-)
+);
+
+
 
 
 const authorizeUser = (req, res, next) => {
 	passport.authenticate('jwt', { session: false }, (error, user) => {
-		if (!user || error) {
+        if (!user || error)
+            
+        {
 			return res.status(401).json({
 				status: 'error',
 				code: 401,
