@@ -1,17 +1,17 @@
 const passport = require('passport')
-const { Strategy, ExtractJwt } = require('passport-jwt')
+const passportJWT = require('passport-jwt')
 const User = require('../models/schemas/user')
 require('dotenv').config()
-const SECRET_KEY = process.env.SECRET_KEY
+const { SECRET_KEY } = process.env
 
-// const ExtractJWT = passportJWT.ExtractJwt
-// const Strategy = passportJWT.Strategy
+const ExtractJwt = passportJWT.ExtractJwt
+const Strategy = passportJWT.Strategy
 const params = {
 	secretOrKey: SECRET_KEY,
 	jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
 }
 
-// JWT Strategy
+
 passport.use(
 	new Strategy(params, function (payload, done) {
 		User.find({ _id: payload.id })
@@ -26,9 +26,9 @@ passport.use(
 )
 
 
-const auth = (req, res, next) => {
-	passport.authenticate('jwt', { session: false }, (err, user) => {
-		if (!user || err) {
+const authorizeUser = (req, res, next) => {
+	passport.authenticate('jwt', { session: false }, (error, user) => {
+		if (!user || error) {
 			return res.status(401).json({
 				status: 'error',
 				code: 401,
@@ -41,4 +41,4 @@ const auth = (req, res, next) => {
 	})(req, res, next)
 }
 
-module.exports = { auth }
+module.exports = { authorizeUser };

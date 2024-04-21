@@ -2,8 +2,11 @@ const service = require('../models/contacts')
 const { contactValidator } = require('../routes/validator')
 
 const getAll = async (req, res) => {
-	const contacts = await service.getAllContacts()
-	console.log('contacts: ', contacts)
+	const page = parseInt(req.query.page) || 1;
+	const limit = parseInt(req.query.limit) || 20;
+	const start = (page - 1) * limit;
+	const end = start + limit;
+	const contacts = (await service.getContactsByQbe(req.query)).slice(start, end);
 	res.status(200).json(contacts)
 }
 
@@ -26,10 +29,10 @@ const addContact = async (req, res, next) => {
 	}
 	try {
 		const result = await service.createContact({ name, email, phone, favorite })
-		res.status(201).json(result)
+		res.status(201).json(result);
 	} catch (e) {
-		console.warn(e)
-		next(e)
+		console.warn(e);
+		next(e);
 	}
 }
 
