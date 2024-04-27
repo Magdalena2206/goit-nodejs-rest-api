@@ -3,7 +3,7 @@ const service = require('../models/users')
 const jwt = require('jsonwebtoken')
 const User = require('../models/schemas/user')
 require('dotenv').config();
-const gravatar = require('gravatar');
+const gravitar = require('gravatar');
 const fs = require('fs/promises');
 const path = require('path');
 const Jimp = require('jimp');
@@ -26,7 +26,7 @@ const signup = async (req, res, next) => {
 		})
 	}
     try {
-        const avatarURL = gravatar.url(email, {
+        const avatarURL = gravitar.url(email, {
             s: '200',
             r: 'pg',
             d: 'mm',

@@ -34,7 +34,8 @@ const userSchema = new Schema(
 )
 
 userSchema.methods.setPassword = function (password) {
-	this.password = bCrypt.hashSync(password, bCrypt.genSaltSync(6))
+	this.password = bCrypt.hashSync(password, bCrypt.genSaltSync(6));
+	
 }
 
 userSchema.methods.validPassword = function (password) {
@@ -48,3 +49,4 @@ userSchema.methods.setToken = function (token) {
 const User = mongoose.model('User', userSchema, 'users')
 
 module.exports = User
+

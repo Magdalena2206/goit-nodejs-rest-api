@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/users');
 const { authorizeUser } = require('../middlewares/auth');
-const { uploadMiddleware } = require('../middleware/upload');
+const { uploadMiddleware } = require('../middlewares/upload');
 
 router.post('/signup', userController.signup)
 router.post('/login', userController.login)
