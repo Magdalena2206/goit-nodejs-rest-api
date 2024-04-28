@@ -1,13 +1,33 @@
 const app = require('./app')
+const mongoose = require('mongoose')
+require('dotenv').config()
+require('colors')
 
-const db = require('./configuration/db');
+const PORT = process.env.PORT || 3000
+const DB_HOST = process.env.DB_HOST
 
-const PORT = process.env.PORT || 3000;
+mongoose.set('strictQuery', true)
 
-db.then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server running. Use our API on port: ${PORT}`);
-  });
-}).catch(err => {
-  console.log(`Server not run. Error: ${err.message}`);
-});
+const connection = mongoose.connect(DB_HOST, {
+	useNewUrlParser: true,
+	useUnifiedTopology: true,
+})
+
+connection
+	.then(() => {
+		console.log('\nDatabase connection successful'.green)
+		app.listen(PORT, () => {
+			console.log(`Server running. Use our API on port: ${PORT}`.green)
+		})
+	})
+	.catch(err => {
+		console.log('\nDatabase not running\n'.red, err.toString())
+		process.exit(1)
+	})
+
+function signalHandler() {
+	mongoose.disconnect()
+	console.log('\nDatabase disconnected\n'.red)
+	process.exit()
+}
+process.on('SIGINT', signalHandler)
