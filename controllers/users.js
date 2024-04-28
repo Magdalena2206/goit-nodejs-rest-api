@@ -173,6 +173,11 @@ const updateAvatar = async (req, res, next) => {
 		return next(err);
 	}
 
+
+	// const retrieveAvatarURL = newUser.getAvatar();
+	// console.log(retrieveAvatarURL);
+
+
 	const isValid = await isCorrectResizedImage(fileName);
 	if (!isValid) {
 		await fs.unlink(fileName);

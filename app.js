@@ -12,6 +12,10 @@ app.use(express.json())
 app.use('/api/contacts', require('./api/contacts'))
 app.use('/api/users', require('./api/users'))
 
+app.use(express.static('public/avatars'));
+
+
+
 app.use((req, res) => {
 	res.status(404).json({ message: 'Not found' })
 })
@@ -19,5 +23,6 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
 	res.status(500).json({ message: err.message })
 })
-
+app.patch('/users/:id', (req, res) => {
+});
 module.exports = app

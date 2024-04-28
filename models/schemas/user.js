@@ -24,6 +24,7 @@ const userSchema = new Schema(
         },
         avatarURL: {
 			type: String,
+			default: null,
 		},
 		owner: {
 			type: Schema.Types.ObjectId,
@@ -44,6 +45,10 @@ userSchema.methods.validPassword = function (password) {
 
 userSchema.methods.setToken = function (token) {
 	this.token = token
+}
+
+userSchema.methods.setAvatar = function (avatarURL) {
+	this.avatar = avatarURL
 }
 
 const User = mongoose.model('User', userSchema, 'users')
