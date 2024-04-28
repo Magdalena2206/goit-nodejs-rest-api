@@ -8,6 +8,8 @@ const fs = require('fs/promises');
 const path = require('path');
 const Jimp = require('jimp');
 const { imageStore } = require('../middlewares/upload');
+const { verificationToken } = require('../generateToken');
+const nodemailer = require('../utils/sendEmail');
 
 const secret = process.env.SECRET;
 
@@ -30,10 +32,15 @@ const signup = async (req, res, next) => {
             s: '200',
             r: 'pg',
             d: 'mm',
-        });
-		const newUser = new User({ email, password, subscription, avatarURL })
+		});
+		
+
+		const newUser = new User({ email, password, subscription, avatarURL, verificationToken })
 		newUser.setPassword(password)
-		await newUser.save()
+		await newUser.save();
+		if (verificationToken) {
+			nodemailer.sendMail(email, verificationToken);
+		}
 		res.status(201).json({
 			status: 'success',
 			code: 201,
@@ -222,6 +229,52 @@ const deleteUserByMail = async (req, res) => {
 		console.log(`Error: ${error.message}`.red);
 	}
 };
+
+const verifyUserByToken = async (req, res) => {
+	try {
+		const token = req.params.verificationToken;
+		const user = await service.getUser({ verificationToken: token });
+		if (!user) {
+			return res.status(404).json({ message: 'Not found user' });
+		} else {
+			await service.updateUserVerification(user.id);
+			res.status(200).json({ message: 'Verification successful' });
+		}
+	} catch (error) {
+		console.log(`Error: ${error.message}`.red);
+	}
+};
+
+const resendMail = async (req, res) => {
+	const { email } = req.body;
+	if (!email) {
+		res.status(400).json({ message: 'missing required field email' });
+	}
+	const user = await service.getUser({ email });
+
+	if (!user) {
+		return res.status(400).json({
+			status: 'error',
+			code: 400,
+			message: 'Incorrect email ',
+		});
+	}
+	if (user.validate) {
+		return res.status(400).json({
+			status: 'error',
+			code: 400,
+			message: 'Verification has already been passed',
+		});
+	}
+	if (!user.validate) {
+		nodemailer.sendMail(email, user.verificationToken);
+		return res.status(400).json({
+			status: 'error',
+			code: 400,
+			message: 'Verification has already been passed',
+		});
+	}
+};
 module.exports = {
     signup,
     login,
@@ -231,4 +284,6 @@ module.exports = {
     updateSubscription,
 	updateAvatar,
 	deleteUserByMail,
+	resendMail,
+	verifyUserByToken
 };

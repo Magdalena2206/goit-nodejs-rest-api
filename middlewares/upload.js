@@ -23,6 +23,7 @@ const createFolderIfNotExist = async folder => {
         }
     } catch (e) {
         console.log('No access to folder');
+        process.exit(1);
     }
 };
 

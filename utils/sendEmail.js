@@ -4,7 +4,7 @@ const { NET_EMAIL, NET_PASSWORD } = process.env;
 
 const nodemailerConfig = {
     host: 'smtp.ethereal.email',
-    port: 465,
+    port: 587,
     secure: true,
     auth: {
         user: NET_EMAIL,
@@ -12,11 +12,11 @@ const nodemailerConfig = {
     },
 };
 
-const transport = nodemailer.createTransport(nodemailerConfig);
+const transporter = nodemailer.createTransport(nodemailerConfig);
 
 const sendEmail = async (data) => {
   const email = { ...data, from: NET_EMAIL};
-  await transport.sendMail(email);
+  await transporter.sendMail(email);
   return true;
 };
 
