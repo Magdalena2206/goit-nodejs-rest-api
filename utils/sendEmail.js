@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
 
-const { NET_EMAIL, NET_PASSWORD } = process.env;
+const { NET_EMAIL, NET_PASSWORD, } = process.env;
 
 const nodemailerConfig = {
     host: 'smtp.ethereal.email',
@@ -14,8 +14,10 @@ const nodemailerConfig = {
 
 const transporter = nodemailer.createTransport(nodemailerConfig);
 
-const sendEmail = async (data) => {
-  const email = { ...data, from: NET_EMAIL};
+const sendEmail = async (data,BASE_URL ) => {
+    const email = { ...data, from: NET_EMAIL };
+    const confirmationLink = `${BASE_URL}/api/auth/verify/${data.verificationToken}`;
+    email.html += `<p>Click <a href="${confirmationLink}">here</a> to confirm your registration.</p>`;
   await transporter.sendMail(email);
   return true;
 };

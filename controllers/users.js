@@ -8,51 +8,126 @@ const fs = require('fs/promises');
 const path = require('path');
 const Jimp = require('jimp');
 const { imageStore } = require('../middlewares/upload');
-const { verificationToken } = require('../generateToken');
-const nodemailer = require('../utils/sendEmail');
+const { v4: uuidv4 } = require('uuid');
+const sendEmail = require('../utils/sendEmail');
+const bcrypt = require('bcrypt')
 
 const secret = process.env.SECRET;
 
 const signup = async (req, res, next) => {
-	const { error } = userValidator(req.body)
-	if (error) return res.status(400).json({ message: error.details[0].message })
-
-	const { email, password, subscription } = req.body
-	const user = await service.getUser({ email })
-	if (user) {
+	const DB_HOST = process.env.DB_HOST;
+	const PORT = process.env.PORT;
+	const BASE_URL = `http://${DB_HOST}:${PORT}}`;
+	const { email, password, subscription } = req.body;
+  
+	try {
+	  const user = await service.getUser({ email });
+	  if (user) {
 		return res.status(409).json({
-			status: 'error',
-			code: 409,
-			message: 'Email is already exist',
-			data: 'Conflict',
-		})
-	}
-    try {
-        const avatarURL = gravitar.url(email, {
-            s: '200',
-            r: 'pg',
-            d: 'mm',
+		  status: 'error',
+		  code: 409,
+		  message: 'Email is already exist',
+		  data: 'Conflict',
 		});
-		
-
-		const newUser = new User({ email, password, subscription, avatarURL, verificationToken })
-		newUser.setPassword(password)
-		await newUser.save();
-		if (verificationToken) {
-			nodemailer.sendMail(email, verificationToken);
-		}
-		res.status(201).json({
-			status: 'success',
-			code: 201,
-			data: {
-				message: 'Registration successful',
-			},
-		})
+	  }
+  
+	  const hashPassword = await bcrypt.hash(password, 10);
+	  const avatarUrl = gravitar.url(email);
+	  const verificationToken = uuidv4();
+  
+	  const newUser = new User({ email, password: hashPassword, subscription, avatarUrl, verificationToken });
+	  await newUser.save();
+  
+	  const verifyEmail = {
+		to: email,
+		subject: 'Confirm your registration',
+		html: `<a target="_blank" href="${BASE_URL}/api/auth/verify/${verificationToken}">Click to confirm your registration</a>`,
+	  };
+  
+	  await sendEmail(verifyEmail, BASE_URL);
+  
+	  res.status(201).json({
+		status: 'success',
+		code: 201,
+		data: {
+		  message: 'Registration successful',
+		},
+	  });
 	} catch (error) {
-		next(error)
+	  next(error);
 	}
-}
+  };
 
+// const signup = async (req, res, next) => {
+// 	const { error } = userValidator(req.body)
+// 	if (error) return res.status(400).json({ message: error.details[0].message })
+
+// 	const { email, password, subscription } = req.body
+// 	const user = await service.getUser({ email })
+// 	if (user) {
+// 		return res.status(409).json({
+// 			status: 'error',
+// 			code: 409,
+// 			message: 'Email is already exist',
+// 			data: 'Conflict',
+// 		})
+// 	}
+//     try {
+//         const avatarURL = gravitar.url(email, {
+//             s: '200',
+//             r: 'pg',
+//             d: 'mm',
+// 		});
+		
+// 		const verificationToken = uuidv4();
+// 		const newUser = new User({ email, password, subscription, avatarURL, verificationToken })
+// 		newUser.setPassword(password)
+// 		await newUser.save();
+// 		if (verificationToken) {
+// 			nodemailer.sendMail(email, verificationToken);
+// 		}
+// 		res.status(201).json({
+// 			status: 'success',
+// 			code: 201,
+// 			data: {
+// 				message: 'Registration successful',
+// 			},
+// 		})
+// 	} catch (error) {
+// 		next(error)
+// 	}
+// }
+// const registerUser = async (req, res, next) => {
+//     try {
+//         const { email, password, subscription, avatarUrl } = req.body;
+//         const verificationToken = uuidv4();
+//         const hashPassword = // Twój kod do hashowania hasła
+
+//         const result = await User.create({
+//             ...req.body,
+//             password: hashPassword,
+//             verificationToken,
+//             subscription,
+//             avatarUrl,
+//         });
+
+//         const verifyEmail = {
+//             to: email,
+//             subject: 'Confirm your registration',
+//             html: `<a target="_blank" href="${BASE_URL}/api/auth/verify/${verificationToken}">Click to confirm your registration</a>`,
+//         };
+
+//         await sendEmail(verifyEmail);
+
+//         res.status(201).json({
+//             email: result.email,
+//             subscription: result.subscription,
+//             avatarUrl: result.avatarUrl,
+//         });
+//     } catch (error) {
+//         next(error);
+//     }
+// };
 
 const logout = async (req, res, next) => {
 	try {
@@ -230,51 +305,123 @@ const deleteUserByMail = async (req, res) => {
 	}
 };
 
-const verifyUserByToken = async (req, res) => {
+const verifyUserByToken = async (req, res, BASE_URL) => {
 	try {
-		const token = req.params.verificationToken;
-		const user = await service.getUser({ verificationToken: token });
-		if (!user) {
-			return res.status(404).json({ message: 'Not found user' });
-		} else {
-			await service.updateUserVerification(user.id);
-			res.status(200).json({ message: 'Verification successful' });
-		}
+	  const token = req.params.verificationToken;
+	  const user = await service.getUser({ verificationToken: token });
+  
+	  if (!user) {
+		return res.status(404).json({ message: 'Not found user' });
+	  } else {
+		await service.updateUserVerification(user.id);
+  
+		// Opcjonalnie: wysyłanie potwierdzenia rejestracji
+		const confirmationEmail = {
+		  to: user.email,
+		  subject: 'Account verified',
+		  html: 'Your account has been successfully verified.',
+		};
+		await sendEmail(confirmationEmail, BASE_URL);
+  
+		return res.status(200).json({ message: 'Verification successful' });
+	  }
 	} catch (error) {
-		console.log(`Error: ${error.message}`.red);
+	  console.log(`Error: ${error.message}`.red);
+	  return res.status(500).json({ message: 'Internal server error' });
 	}
-};
+  };
 
-const resendMail = async (req, res) => {
+// const verifyUserByToken = async (req, res) => {
+// 	try {
+// 		const token = req.params.verificationToken;
+// 		const user = await service.getUser({ verificationToken: token });
+// 		if (!user) {
+// 			return res.status(404).json({ message: 'Not found user' });
+// 		} else {
+// 			await service.updateUserVerification(user.id);
+// 			res.status(200).json({ message: 'Verification successful' });
+// 		}
+// 	} catch (error) {
+// 		console.log(`Error: ${error.message}`.red);
+// 	}
+// };
+const resendMail = async (req, res, BASE_URL) => {
 	const { email } = req.body;
+	
 	if (!email) {
-		res.status(400).json({ message: 'missing required field email' });
+	  return res.status(400).json({ message: 'missing required field email' });
 	}
+  
 	const user = await service.getUser({ email });
-
+  
 	if (!user) {
-		return res.status(400).json({
-			status: 'error',
-			code: 400,
-			message: 'Incorrect email ',
-		});
+	  return res.status(400).json({
+		status: 'error',
+		code: 400,
+		message: 'Incorrect email ',
+	  });
 	}
+  
 	if (user.validate) {
-		return res.status(400).json({
-			status: 'error',
-			code: 400,
-			message: 'Verification has already been passed',
-		});
+	  return res.status(400).json({
+		status: 'error',
+		code: 400,
+		message: 'Verification has already been passed',
+	  });
 	}
-	if (!user.validate) {
-		nodemailer.sendMail(email, user.verificationToken);
-		return res.status(400).json({
-			status: 'error',
-			code: 400,
-			message: 'Verification has already been passed',
-		});
+  
+	try {
+	  const verifyEmail = {
+		to: email,
+		subject: 'Confirm your registration',
+		html: `<a target="_blank" href="${BASE_URL}/api/auth/verify/${user.verificationToken}">Click to confirm your registration</a>`,
+	  };
+  
+	  await sendEmail(verifyEmail, BASE_URL);
+  
+	  return res.status(200).json({
+		status: 'success',
+		code: 200,
+		message: 'Verification email has been resent',
+	  });
+	} catch (error) {
+	  return res.status(500).json({
+		status: 'error',
+		code: 500,
+		message: 'Internal server error',
+	  });
 	}
-};
+  };
+// const resendMail = async (req, res) => {
+// 	const { email } = req.body;
+// 	if (!email) {
+// 		res.status(400).json({ message: 'missing required field email' });
+// 	}
+// 	const user = await service.getUser({ email });
+
+// 	if (!user) {
+// 		return res.status(400).json({
+// 			status: 'error',
+// 			code: 400,
+// 			message: 'Incorrect email ',
+// 		});
+// 	}
+// 	if (user.validate) {
+// 		return res.status(400).json({
+// 			status: 'error',
+// 			code: 400,
+// 			message: 'Verification has already been passed',
+// 		});
+// 	}
+// 	if (!user.validate) {
+// 		nodemailer.sendMail(email, user.verificationToken);
+// 		return res.status(400).json({
+// 			status: 'error',
+// 			code: 400,
+// 			message: 'Verification has already been passed',
+// 		});
+// 	}
+// };
 module.exports = {
     signup,
     login,
