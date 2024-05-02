@@ -8,7 +8,7 @@ const sendVerificationToken = async (mail, token) => {
 	console.log(process.env.SENDGRID_API_KEY);
 	const msg = {
 		to: mail,
-		from: 'daria.oska@gmail.com',
+		from: 'magdalenauszynska@o2.pl',
 		subject: 'Email verification',
 		text: `Let's verify your email address`,
 		html: `<strong>By clicking on the following link, you are confirming your email address <a href=${`http://localhost:3000/api/users/verify/${token}`}>VERIFY</a></strong>`,
