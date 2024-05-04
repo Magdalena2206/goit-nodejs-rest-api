@@ -38,7 +38,8 @@ const signup = async (req, res, next) => {
     newUser.setPassword(password);
     await newUser.save();
     if (verificationToken) {
-      sgMail.sendVerificationToken(email, verificationToken);
+      // Poprawiona linia
+      await sgMail.sendVerificationToken(email, verificationToken);
     }
     res.status(201).json({
       status: "success",
@@ -48,6 +49,7 @@ const signup = async (req, res, next) => {
       },
     });
   } catch (error) {
+    console.log(error); // Dodana linia
     next(error);
   }
 };
