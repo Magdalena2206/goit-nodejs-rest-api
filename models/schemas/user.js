@@ -44,9 +44,13 @@ const userSchema = new Schema(
 )
 
 userSchema.methods.setPassword = function (password) {
-	this.password = bCrypt.hashSync(password, bCrypt.genSaltSync(6));
-	
-}
+	if (password) {
+	  console.log("Received password:", password);
+	  this.password = bCrypt.hashSync(password, bCrypt.genSaltSync(6));
+	} else {
+	  console.error("Password is undefined");
+	}
+  }
 
 userSchema.methods.validPassword = function (password) {
 	return bCrypt.compareSync(password, this.password)

@@ -16,7 +16,11 @@ const secret = process.env.SECRET;
 const signup = async (req, res, next) => {
   const { error } = userValidator(req.body);
   if (error) return res.status(400).json({ message: error.details[0].message });
+  // Logowanie przekazywanych danych
+  console.log("Received email:", req.body.email);
+  console.log("Received password:", req.body.password);
   const { email, password, subscription } = req.body;
+  console.log("Password before setting:", password);
   const user = await service.getUser({ email });
   if (user) {
     return res.status(409).json({
@@ -34,9 +38,15 @@ const signup = async (req, res, next) => {
     });
 
     const verificationToken = nanoid();
-    const newUser = new User({ email, password, subscription, avatarURL, verificationToken });
-    newUser.setPassword(password);
+    const newUser = new User({ email, subscription, avatarURL, verificationToken });
+
+    if (password) {
+      newUser.setPassword(password);
+    } else {
+      console.error("Password is undefined");
+    }
     await newUser.save();
+    
     if (verificationToken) {
       // Poprawiona linia
       await sgMail.sendVerificationToken(email, verificationToken);
