@@ -38,7 +38,7 @@ const signup = async (req, res, next) => {
     });
 
     const verificationToken = nanoid();
-    const newUser = new User({ email, subscription, avatarURL, verificationToken });
+    const newUser = new User({ email, password, subscription, avatarURL, verificationToken });
 
     if (password) {
       newUser.setPassword(password);

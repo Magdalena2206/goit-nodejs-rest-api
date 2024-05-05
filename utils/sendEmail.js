@@ -6,6 +6,7 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const sendVerificationToken = async (mail, token) => {
 	console.log(process.env.SENDGRID_API_KEY);
+	// const myEmailAddress = 'magdalenauszynska@o2.pl';
 	const msg = {
 		to: mail,
 		from: 'magdalenauszynska@o2.pl',

@@ -1,14 +1,15 @@
 // const jwt = require('jsonwebtoken');
 const passport = require('passport')
-const {Strategy, ExtractJwt} = require('passport-jwt')
+const passportJWT = require('passport-jwt')
 const User = require('../models/schemas/user')
 require('dotenv').config()
 const secret = process.env.SECRET;
-
+const ExtractJWT = passportJWT.ExtractJwt;
+const Strategy = passportJWT.Strategy;
 
 const params = {
 	secretOrKey: secret,
-	jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+	jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
 }
 
 
