@@ -1,11 +1,13 @@
-// const jwt = require('jsonwebtoken');
+require('dotenv').config()
 const passport = require('passport')
 const passportJWT = require('passport-jwt')
-const User = require('../models/schemas/user')
-require('dotenv').config()
-const secret = process.env.SECRET;
 const ExtractJWT = passportJWT.ExtractJwt;
 const Strategy = passportJWT.Strategy;
+
+const User = require('../models/schemas/user')
+
+const secret = process.env.SECRET;
+
 
 const params = {
 	secretOrKey: secret,
