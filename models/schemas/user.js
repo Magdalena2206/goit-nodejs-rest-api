@@ -30,14 +30,27 @@ const userSchema = new Schema(
 			type: Schema.Types.ObjectId,
 			ref: 'user',
 		},
+		verify: {
+			type: Boolean,
+			default: false,
+		},
+		verificationToken: {
+			type: String,
+			default: null,
+			required: [true, 'Verify token is required'],
+		},
 	},
 	{ versionKey: false, timestamp: true }
 )
 
 userSchema.methods.setPassword = function (password) {
-	this.password = bCrypt.hashSync(password, bCrypt.genSaltSync(6));
-	
-}
+	if (password) {
+	  console.log("Received password:", password);
+	  this.password = bCrypt.hashSync(password, bCrypt.genSaltSync(6));
+	} else {
+	  console.error("Password is undefined");
+	}
+  }
 
 userSchema.methods.validPassword = function (password) {
 	return bCrypt.compareSync(password, this.password)

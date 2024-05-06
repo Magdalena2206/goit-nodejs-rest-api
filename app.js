@@ -1,6 +1,7 @@
 const express = require('express')
 const logger = require('morgan')
 const cors = require('cors')
+const path = require('path');
 
 const app = express()
 
@@ -12,7 +13,7 @@ app.use(express.json())
 app.use('/api/contacts', require('./api/contacts'))
 app.use('/api/users', require('./api/users'))
 
-app.use(express.static('public/avatars'));
+app.use('/avatars', express.static(path.join(process.cwd(), 'public', 'avatars')));
 
 
 
@@ -23,6 +24,8 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
 	res.status(500).json({ message: err.message })
 })
-app.patch('/users/:id', (req, res) => {
+app.use((error, req, res, next) => {
+	res.status(error.status || 500);
+	res.json({ message: error.message, status: error.status });
 });
 module.exports = app
